@@ -13,7 +13,9 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        return view('dashboard.categories');
+        $categories = Auth::user()->categories;
+        
+        return view('dashboard.categories',compact('categories'));
     }
 
     /**
@@ -49,17 +51,26 @@ class CategoryController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Category $category)
+    public function edit($category)
     {
-        //
+        $category = Category::findOrFail($category);
+        return response()->json($category);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Category $category)
+    public function update(Request $request, $category)
     {
-        //
+        $validated = $request->validate([
+            'name' => ['required', 'string','max:255'],
+         ]);
+
+         $category = Category::findOrfail($category);
+
+         $category->update(['name'=>$validated['name']]);
+         
+         return redirect()->route('categories.index')->with('success', 'Category modifié avec succès !');
     }
 
     /**
@@ -67,6 +78,7 @@ class CategoryController extends Controller
      */
     public function destroy(Category $category)
     {
-        //
+        $category->delete();
+        return redirect()->route('categories.index')->with('success','Category supprimé avec succès !');
     }
 }
