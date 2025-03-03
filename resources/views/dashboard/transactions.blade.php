@@ -3,6 +3,44 @@
     </x-slot:head>
 
     <x-slot:script>
+        <script>
+                    
+        function openEditModal(transactionId) {
+            
+            fetch(`/transactions/${transactionId}/edit`)
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('edit-transaction-date').value = data.transaction_date;
+                    document.getElementById('edit-transaction-description').value = data.description;
+                    document.getElementById('edit-transaction-amount').value = data.amount;
+                    document.getElementById('edit-transaction-type').value = data.type;
+                    document.getElementById('edit-transaction-category').value = data.category_id;
+
+                    // action 
+                    const formAction = document.getElementById('editTransactionForm').action.replace(':transaction_id', transactionId);
+                    document.getElementById('editTransactionForm').action = formAction;
+
+                    document.getElementById('editTransactionModal').classList.remove('hidden');
+                })
+                .catch(error => {
+                    console.error('Error fetching transaction data:', error);
+                });
+        }
+
+        function openAddModal() {
+            const errorMessages = document.querySelectorAll('#addTransactionModal .text-red-500');
+            errorMessages.forEach(error => error.innerHTML = '');
+            document.getElementById('addTransactionModal').classList.remove('hidden');
+        }
+
+        function openDeleteModal(transactionId) {
+            const formAction = document.getElementById('deleteTransactionForm').action.replace(':transaction_id', transactionId);
+            document.getElementById('deleteTransactionForm').action = formAction;
+
+            document.getElementById('deleteConfirmationModal').classList.remove('hidden');
+        }
+        </script>
+        
     </x-slot:script>
 
         <!-- Main Content -->
@@ -16,7 +54,7 @@
                     </div>
                     
                     <div class="mt-4 md:mt-0">
-                        <button onclick="document.getElementById('addTransactionModal').classList.remove('hidden')" class="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center">
+                        <button onclick="openAddModal()" class="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
@@ -54,11 +92,10 @@
                                 @endif
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                     <div class="text-right text-sm font-medium space-x-2">
-                                        <button onclick="document.getElementById('editTransactionModal').classList.remove('hidden')" class="text-primary-600 hover:text-primary-900">Modifier</button>
-                                        <button onclick="document.getElementById('deleteConfirmationModal').classList.remove('hidden')" class="text-red-600 hover:text-red-900">Supprimer</button>
+                                        <button  onclick="openEditModal({{ $item->id }})" class="text-primary-600 hover:text-primary-900">Modifier</button>
+                                        <button onclick="openDeleteModal({{ $item->id }})"class="text-red-600 hover:text-red-900">Supprimer</button>
                                     </div>
                                 </td>
-
                             </tr>
                             @endforeach
                         </tbody>
@@ -71,7 +108,7 @@
 
 
     <!-- Add Transaction Modal -->
-<div id="addTransactionModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center @if($errors->any()) block @else hidden @endif">
+    <div id="addTransactionModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center @if($errors->any() && !request()->has('edit')) block @else hidden @endif">
 
         <div class="bg-white rounded-lg p-6 max-w-md w-full">
             <div class="flex justify-between items-center mb-4">
@@ -147,7 +184,7 @@
     </div>
 
     <!-- Edit Transaction Modal -->
-    <div id="editTransactionModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden">
+    <div id="editTransactionModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center @if($errors->any() && request()->has('edit')) block @else hidden @endif">
         <div class="bg-white rounded-lg p-6 max-w-md w-full">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-900">Modifier la Transaction</h2>
@@ -157,36 +194,51 @@
                     </svg>
                 </button>
             </div>
-            <form>
+            <form id="editTransactionForm" method="POST" action="{{ route('transactions.update', ['transaction' => ':transaction_id']) }}"> 
+                @csrf
+                @method('PUT')
                 <div class="space-y-4">
                     <div>
                         <label for="edit-transaction-date" class="block text-sm font-medium text-gray-700">Date</label>
-                        <input type="date" id="edit-transaction-date" value="2023-06-15" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        <input type="date" id="edit-transaction-date" name="transaction_date"  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        @error('description')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
                     <div>
                         <label for="edit-transaction-description" class="block text-sm font-medium text-gray-700">Description</label>
-                        <input type="text" id="edit-transaction-description" value="Salaire" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        <input type="text" id="edit-transaction-description" name="description"  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        @error('description')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
                     <div>
                         <label for="edit-transaction-amount" class="block text-sm font-medium text-gray-700">Montant</label>
-                        <input type="number" id="edit-transaction-amount" value="2800.00" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        <input type="number" id="edit-transaction-amount" name="amount" step="0.01" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        @error('amount')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
                     <div>
                         <label for="edit-transaction-type" class="block text-sm font-medium text-gray-700">Type</label>
-                        <select id="edit-transaction-type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                        <select id="edit-transaction-type" name="type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
                             <option value="expense">Dépense</option>
                             <option value="income" selected>Revenu</option>
                         </select>
+                        @error('type')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
                     <div>
                         <label for="edit-transaction-category" class="block text-sm font-medium text-gray-700">Catégorie</label>
-                        <select id="edit-transaction-category" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
-                            <option value="income" selected>Revenus</option>
-                            <option value="food">Alimentation</option>
-                            <option value="transport">Transport</option>
-                            <option value="housing">Logement</option>
-                            <option value="leisure">Loisirs</option>
+                        <select id="edit-transaction-category" name="category_id"  class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                            @foreach (Auth::user()->categories as $item)
+                            <option value="{{ $item->id }}">{{ $item->name }}</option>
+                           @endforeach
                         </select>
+                        @error('category_id')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
                 </div>
                 <div class="mt-6 flex justify-end space-x-3">
@@ -219,14 +271,18 @@
                     </div>
                 </div>
             </div>
+            <form id="deleteTransactionForm" method="POST" action="{{ route('transactions.destroy', ['transaction' => ':transaction_id']) }}"> 
+                @csrf
+                @method('DELETE')
             <div class="mt-6 flex justify-end space-x-3">
                 <button type="button" onclick="this.closest('#deleteConfirmationModal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
                     Annuler
                 </button>
-                <button type="button" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                     Supprimer
                 </button>
             </div>
+            </form>
         </div>
     </div>
 
