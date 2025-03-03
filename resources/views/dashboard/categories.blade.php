@@ -6,6 +6,40 @@
     </x-slot:head>
 
     <x-slot:script>
+        <script>
+                    
+            function openEditModal(categoryId) {
+                const errorMessages = document.querySelectorAll('#editCategoryModal .text-red-500');
+                errorMessages.forEach(error => error.innerHTML = '');
+                fetch(`/categories/${categoryId}/edit`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('edit-category-name').value = data.name;
+                       
+                        // action 
+                        const formAction = document.getElementById('editCategoryForm').action.replace(':category_id', categoryId);
+                        document.getElementById('editCategoryForm').action = formAction;
+    
+                        document.getElementById('editCategoryModal').classList.remove('hidden');
+                    })
+                    .catch(error => {
+                        console.error('Error fetching transaction data:', error);
+                    });
+            }
+    
+            function openAddModal() {
+                const errorMessages = document.querySelectorAll('#addCategoryModal .text-red-500');
+                errorMessages.forEach(error => error.innerHTML = '');
+                document.getElementById('addCategoryModal').classList.remove('hidden');
+            }
+    
+            function openDeleteModal(categoryId) {
+                const formAction = document.getElementById('deleteCategoryForm').action.replace(':category_id', categoryId);
+                document.getElementById('deleteCategoryForm').action = formAction;
+    
+                document.getElementById('deleteCategoryModal').classList.remove('hidden');
+            }
+            </script>
     </x-slot:script>
 
    
@@ -20,7 +54,7 @@
                     </div>
                     
                     <div class="mt-4 md:mt-0">
-                        <button onclick="document.getElementById('addCategoryModal').classList.remove('hidden')" class="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center">
+                        <button onclick="openAddModal()" class="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 flex items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                             </svg>
@@ -41,12 +75,12 @@
                                 </div>
                             </div>
                             <div class="flex space-x-2">
-                                <button onclick="document.getElementById('editCategoryModal').classList.remove('hidden')" class="text-gray-400 hover:text-primary-600">
+                                <button onclick="openEditModal({{ $item->id }})" class="text-gray-400 hover:text-primary-600">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                     </svg>
                                 </button>
-                                <button onclick="document.getElementById('deleteCategoryModal').classList.remove('hidden')" class="text-gray-400 hover:text-red-600">
+                                <button onclick="openDeleteModal({{ $item->id }})"  class="text-gray-400 hover:text-red-600">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                     </svg>
@@ -61,7 +95,7 @@
 
 
     <!-- Add Category Modal -->
-    <div id="addCategoryModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center @if($errors->any()) block @else hidden @endif">
+    <div id="addCategoryModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center @if($errors->any() && !request()->has('edit')) block @else hidden @endif">
         <div class="bg-white rounded-lg p-6 max-w-md w-full">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-900">Nouvelle Catégorie</h2>
@@ -95,7 +129,7 @@
     </div>
 
     <!-- Edit Category Modal -->
-    <div id="editCategoryModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center hidden">
+    <div id="editCategoryModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center @if($errors->any() && request()->has('edit')) block @else hidden @endif ">
         <div class="bg-white rounded-lg p-6 max-w-md w-full">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl font-bold text-gray-900">Modifier la Catégorie</h2>
@@ -105,11 +139,16 @@
                     </svg>
                 </button>
             </div>
-            <form>
+            <form id="editCategoryForm" method="POST" action="{{ route('categories.update', ['category' => ':category_id']) }}"> 
+                @csrf
+                @method('PUT')
                 <div class="space-y-4">
                     <div>
                         <label for="edit-category-name" class="block text-sm font-medium text-gray-700">Nom</label>
-                        <input type="text" id="edit-category-name" value="Alimentation" class="w-full p-3 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        <input type="text" id="edit-category-name" name="name" class="w-full p-3 border border-green-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                        @error('name')
+                        <span class="text-red-500 text-sm">{{ $message }}</span>
+                        @enderror
                     </div>
                 </div>
                 <div class="mt-6 flex justify-end space-x-3">
@@ -142,14 +181,18 @@
                     </div>
                 </div>
             </div>
+            <form id="deleteCategoryForm" method="POST" action="{{ route('categories.destroy', ['category' => ':category_id']) }}"> 
+                @csrf
+                @method('DELETE')
             <div class="mt-6 flex justify-end space-x-3">
                 <button type="button" onclick="this.closest('#deleteCategoryModal').classList.add('hidden')" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50">
                     Annuler
                 </button>
-                <button type="button" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
                     Supprimer
                 </button>
             </div>
+            </form>
         </div>
     </div>
 
