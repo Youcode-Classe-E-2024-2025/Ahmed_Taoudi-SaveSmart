@@ -14,7 +14,7 @@ require_once __DIR__ . '/auth.php';
 
 Route::get('/',[HomeController::class,'index']);
 
-Route::get('/dashboard',[DashboardController::class,'index'])->name('user.dashboard');
+// Route::get('/dashboard',[DashboardController::class,'index'])->name('user.dashboard');
 
 Route::middleware(['auth'])->group(function () {
     Route::resource('profiles',ProfileController::class)->only(['index','create','store','show']);

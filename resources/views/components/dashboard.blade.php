@@ -12,20 +12,24 @@
 </head>
 <body class="bg-gray-50">
     @if(session('error'))
-    <div class=" relative bg-red-200 text-red-700 w-fit p-4 rounded-md m-auto">
+    <div class="absolute top-0 right-0  w-screen ">
+        <div class=" relative bg-red-200 text-red-700 w-fit p-4 rounded-md m-auto">
             <button class="absolute top-0 right-0 p-2" onclick="this.parentElement.style.display='none'">
                 &times;
             </button>
             {{ session('error') }}
         </div>
+    </div>
     @endif
     @if(session('success'))
+    <div class="absolute z-40 top-4 right-0  w-screen ">
         <div class=" relative bg-green-200 text-green-700 w-fit p-4 rounded-md m-auto">
             <button class="absolute top-0 right-0 p-2" onclick="this.parentElement.style.display='none'">
                 &times;
             </button>
             {{ session('success') }}
         </div>
+    </div>
     @endif
     <div class="flex h-screen overflow-hidden">
         @include('partials.sidebar')
