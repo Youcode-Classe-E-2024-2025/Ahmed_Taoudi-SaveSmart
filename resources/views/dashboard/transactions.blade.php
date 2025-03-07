@@ -45,6 +45,7 @@
 
         <!-- Main Content -->
         <main class="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50">
+            <div class="h-16 md:h-0"></div>
             <div class="max-w-7xl mx-auto">
                 <!-- Header -->
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
@@ -65,7 +66,7 @@
 
                 <div class="inline-block min-w-full align-middle ">
                     @if ($profile->transactions->isEmpty()) 
-                    <div  class="min-w-full   text-gray-500"> 
+                    <div  class="min-w-full  bg-white p-10 rounded-sm  text-gray-500 text-center"> 
                         pas de transactions 
                     </div>
                     @else
