@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Profile;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 
 class ProfileController extends Controller
@@ -49,7 +51,24 @@ class ProfileController extends Controller
     // affiche dashboard pour current user
     public function show(Profile $profile){
         session(['current_profile_id'=>$profile->id]);
-        // dd($profile->transactions);
-        return view('dashboard.index',compact('profile'));
+        Carbon::setLocale('fr');
+        $currentMonthStart = Carbon::now()->startOfMonth();
+        $currentMonthEnd = Carbon::now()->endOfMonth();
+
+        $user = User::with(['profiles.transactions' => function($query) use ($currentMonthStart, $currentMonthEnd) {
+            $query->whereBetween('transaction_date', [$currentMonthStart, $currentMonthEnd]);
+        }, 'categories','savingsGoals'])->find(Auth::user()->id);
+
+        $transactions = $user->profiles->flatMap(function ($profile) {
+            return $profile->transactions;
+        });
+
+        $goals = $user->savingsGoals()->latest()->take(3)->get();
+        
+        $stats = [
+            'income'=> $transactions->where('type', 'income')->sum('amount'),
+            'expense'=> $transactions->where('type', 'expense')->sum('amount'),
+    ];
+        return view('dashboard.index',compact('profile','transactions','stats','goals'));
     }
 }
